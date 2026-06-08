@@ -1,0 +1,57 @@
+<?php
+
+namespace App\Notifications;
+
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Notifications\Notification;
+
+class RentalExpiryToday extends Notification
+{
+    use Queueable;
+
+    /**
+     * Create a new notification instance.
+     */
+    public function __construct()
+    {
+        //
+    }
+
+    /**
+     * Get the notification's delivery channels.
+     *
+     * @return array<int, string>
+     */
+    public function via(object $notifiable): array
+    {
+        return ['mail'];
+    }
+
+    /**
+     * Get the mail representation of the notification.
+     */
+    public function toMail(object $notifiable): MailMessage
+    {
+        return (new MailMessage)
+            ->greeting('Hello ' . $notifiable->name . '!')
+            ->line('Your rental is expiring today. Please return the book on time to avoid late fees.')
+            ->action('Book PLanet', url('/dashboard'))
+            ->line('Thank you for using Book Planet!');
+    }
+
+    /**
+     * Get the array representation of the notification.
+     *
+     * @return array<string, mixed>
+     */
+    public function toArray(object $notifiable): array
+    {
+        return [
+            'rental_id' => $this->rental->id,
+            'book_title' => $this->rental->book->title,
+            'expiry_date' => $this->rental->expires_at->toDateString(),
+        ];
+    }
+}

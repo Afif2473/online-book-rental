@@ -1,0 +1,263 @@
+@extends('layout')
+
+@section('content')
+<div class="container-fluid" style="background-color: #f8fafc; min-height: 100vh;">
+    <div class="row pt-4 px-3">
+        
+        <!-- Sidebar Menu -->
+        <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block collapse">
+            <div class="bg-white rounded-4 p-4 d-flex flex-column" style="position: sticky; top: 1.5rem; height: calc(100vh - 3rem); overflow-y: auto; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);">
+                
+                <!-- Logo Area -->
+                <div class="text-center mb-4">
+                    <img src="{{ asset('images/PL_Logo_whiteBG.png') }}" alt="Logo" style="height: 60px; object-fit: contain;">
+                </div>
+
+                <h6 class="text-primary fw-bold text-uppercase mb-3 px-2" style="letter-spacing: 1px; font-size: 0.85rem;">Book Rental</h6>
+                
+                <ul class="nav flex-column mb-auto gap-2">
+                    <li class="nav-item">
+                        <a class="nav-link text-muted fw-bold rounded-3 px-3 py-2" style="font-size: 0.85rem;" href="{{ route('dashboard') }}">
+                            Active Rentals
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <!-- Active State Applied Here -->
+                        <a class="nav-link active fw-bold rounded-3 px-3 py-2" href="{{ route('books.index') }}" style="font-size: 0.85rem;background-color: #eff6ff; color: #3b82f6;">
+                            Book Collections
+                        </a>
+                    </li>
+                    @can('admin')
+                    <li class="nav-item">
+                        <a class="nav-link text-muted fw-bold rounded-3 px-3 py-2" href="{{ route('report.index') }}" style="font-size: 0.85rem;">
+                            Report
+                        </a>
+                    </li>
+                    @endcan
+                    <li class="nav-item">
+                        <a class="nav-link text-muted fw-bold rounded-3 px-3 py-2" style="font-size: 0.85rem;" href="{{ route('settings') }}">Settings</a>
+                    </li>
+                </ul>
+
+                <div class="mt-auto pt-3 border-top d-flex justify-content-between align-items-center px-2">
+                    <div>
+                        <span class="d-block fw-bold" style="color: #1f2937; font-size: 0.95rem;">{{ auth()->user()->name }}</span>
+                        <span class="text-muted" style="font-size: 0.8rem;">{{ ucfirst(auth()->user()->role) }}</span>
+                    </div>
+                    <form method="POST" action="{{ route('logout') }}" class="m-0">
+                        @csrf
+                        <button type="submit" class="btn btn-link text-danger text-decoration-none fw-bold p-0" style="font-size: 0.85rem;">Log out</button>
+                    </form>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            @if(session('success'))
+                <div class="alert alert-success alert-dismissible fade show rounded-3 border-0 shadow-sm" role="alert">{{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @elseif($errors->any())
+                <div class="alert alert-danger alert-dismissible fade show rounded-3 border-0 shadow-sm" role="alert">
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    <ul class="mb-0">
+                        @foreach ($errors->all() as $error)
+                            <p>{{ $error }}</p>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif 
+
+            @can('admin')
+                <!-- ADMIN VIEW (Table Format) -->
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom mt-2">
+                    <h1 class="h2 fw-bold">Manage Library</h1>
+                    <button class="btn btn-primary rounded-pill px-4" data-bs-toggle="offcanvas" data-bs-target="#addBookOffcanvas" aria-controls="addBookOffcanvas">Add New Book</button>
+                    @include('books.partials.create')
+                </div>
+                
+                <form method="GET" action="{{ route('books.index') }}" class="row g-2 mb-4 mt-2">
+                    <div class="col-md-8">
+                        <input type="text" name="search" class="form-control rounded-pill px-4" placeholder="Search title, author, or ISBN..." value="{{ request('search') }}">
+                    </div>
+                    <div class="col-md-2"><button type="submit" class="btn btn-primary w-100 rounded-pill">Search</button></div>
+                    <div class="col-md-2"><a href="{{ route('books.index') }}" class="btn btn-outline-secondary w-100 rounded-pill">Clear</a></div>
+                </form>
+
+                <div class="bg-white rounded-4 shadow-sm p-3 table-responsive">
+                    <table class="table align-middle border-light">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Cover</th><th>Title</th><th>Author</th><th>ISBN</th><th>Stock</th><th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($books as $book)
+                                <tr>
+                                    <td>
+                                        @if($book->book_cover)
+                                            <img src="{{ asset('storage/' . $book->book_cover) }}" alt="Cover" class="rounded" style="width: 40px; height: 60px; object-fit: cover;">
+                                        @else
+                                            <div class="bg-light rounded d-flex align-items-center justify-content-center" style="width: 40px; height: 60px;"><span class="small text-muted">No</span></div>
+                                        @endif
+                                    </td>
+                                    <td class="fw-bold">{{ $book->title }}</td>
+                                    <td>{{ $book->author }}</td>
+                                    <td class="text-muted">{{ $book->isbn }}</td>
+                                    <td>
+                                        @if($book->quantity > 0) <span class="badge bg-success">{{ $book->quantity }} Available</span>
+                                        @else <span class="badge bg-danger">Out of Stock</span> @endif
+                                    </td>
+                                    <td>
+                                        <!--<a href="{{ route('books.edit', $book->id) }}" class="btn btn-sm btn-warning">Edit</a> -->
+                                        <button class="btn btn-sm btn-warning shadow-none" data-bs-toggle="offcanvas" data-bs-target="#editBookOffcanvas{{ $book->id }}" aria-controls="editBookOffcanvas{{ $book->id }}">Edit</button>
+                                        @include('books.partials.edit', ['book' => $book])
+                                        <form action="{{ route('books.destroy', $book->id) }}" method="POST" class="d-inline">
+                                            @csrf @method('DELETE')
+                                            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteBookModal{{ $book->id }}">Delete</button>
+                                            <div class="modal fade" id="deleteBookModal{{ $book->id }}" tabindex="-1" aria-labelledby="deleteBookModalLabel{{ $book->id }}" aria-hidden="true">
+                                                <div class="modal-dialog">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h1 class="modal-title fs-5" id="deleteBookModalLabel{{ $book->id }}">Delete Book</h1>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            Are you sure you want to delete "<strong>{{ $book->title }}</strong>"?
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                            <button type="submit" class="btn btn-danger">Delete</button>
+                                                        </div>
+                                                        </div>
+                                                    </div>      
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="6" class="text-center text-muted py-4">No books found in the collection.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination for Admin -->
+                @if($books->hasPages())
+                    <div class="mt-4 d-flex justify-content-end">
+                        {{ $books->links() }}
+                    </div>
+                @endif
+
+            @else
+                <div>
+                    <span class="text-muted small text-uppercase fw-bold" style="letter-spacing: 1px;">Dashboard</span>
+                    <h2 class="fw-bold mb-1" style="color: #111827;">Book Collections</h2>
+                    <p class="text-muted small mb-0">Choose any book to rent</p>
+                </div>
+                <form method="GET" action="{{ route('books.index') }}" class="row g-2 mb-4 mt-2">
+                        <div class="col-md-8">
+                            <input type="text" name="search" class="form-control rounded-pill px-4" placeholder="Search title, author, or ISBN..." value="{{ request('search') }}">
+                        </div>
+                        <div class="col-md-2"><button type="submit" class="btn btn-primary w-100 rounded-pill">Search</button></div>
+                        <div class="col-md-2"><a href="{{ route('books.index') }}" class="btn btn-outline-secondary w-100 rounded-pill">Clear</a></div>
+                    </form>
+                
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                    @forelse ($books as $book)
+                        <div class="col">
+                            <div class="card custom-card bg-white h-100 p-2">
+                                
+                                @if($book->book_cover)
+                                    <img src="{{ asset('storage/' . $book->book_cover) }}" class="card-img-top rounded-4" alt="Cover" style="height: 250px; object-fit: cover;">
+                                @else
+                                    <div class="card-img-top rounded-4 d-flex align-items-center justify-content-center text-muted" style="height: 250px; background-color: #f1f5f9;">
+                                        <span class="small fw-bold text-uppercase" style="letter-spacing: 2px; color: #cbd5e1;">Book Cover</span>
+                                    </div>
+                                @endif
+                                
+                                <div class="card-body d-flex justify-content-between align-items-start px-3 py-3 gap-2">
+                                    <div class="overflow-hidden">
+                                        <h5 class="fw-bold mb-1 text-truncate" style="max-width: 180px;">{{ $book->title }}</h5>
+                                        <p class="text-muted small mb-0">{{ $book->author }}</p>
+                                    </div>
+                                    @if($book->quantity > 0) 
+                                        <span class="badge-approved">Available</span>
+                                    @else 
+                                        <span class="badge-rejected">Out of Stock</span> 
+                                    @endif
+                                </div>
+                                
+                                <div class="overflow-auto figma-card-footer mt-auto d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="d-block text-muted" style="font-size: 0.65rem; font-weight: 700; letter-spacing: 1px;">ISBN</span>
+                                        <span class="fw-bold text-truncate" style="font-size: 0.85rem; color: #1f2937;">{{ $book->isbn }}</span>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <button type="button" class="btn btn-light btn-sm rounded-pill px-3 fw-bold text-muted" data-bs-toggle="modal" data-bs-target="#bookModal{{ $book->id }}" style="font-size: 0.85rem;">
+                                            Details
+                                        </button>
+
+                                        @if($book->quantity > 0)
+                                            <form action="{{ route('rentals.store', $book->id) }}" method="POST" class="m-0">
+                                                @csrf
+                                                <button type="submit" class="btn btn-sm rounded-pill px-3 fw-bold" style="background-color: #eff6ff; color: #3b82f6; border: none; font-size: 0.85rem;">Rent</button>
+                                            </form>
+                                        @else
+                                            <button class="btn btn-secondary text-truncate btn-sm rounded-pill px-3 fw-bold" style="font-size: 0.85rem;" disabled>Unavailable</button>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                                <div class="modal fade" id="bookModal{{ $book->id }}" tabindex="-1" aria-labelledby="bookModalLabel{{ $book->id }}">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content border-0 rounded-4 shadow">
+                                            <div class="modal-header border-0 pb-0">
+                                                <h5 class="modal-title fw-bold" id="bookModalLabel{{ $book->id }}">{{ $book->title }}</h5>
+                                                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body pt-2">
+                                                <p class="text-muted small mb-3">By {{ $book->author }} &bull; ISBN: {{ $book->isbn }}</p>
+                                                
+                                                <div class="mb-3">
+                                                    <h6 class="fw-bold" style="font-size: 0.85rem;">Description</h6>
+                                                    <p class="text-muted" style="font-size: 0.9rem; white-space: pre-wrap;">{{ $book->description ?? 'No description available for this book.' }}</p>
+                                                </div>
+                                                
+                                                <div class="d-flex justify-content-between align-items-center mt-4 p-3 rounded-3" style="background-color: #f8fafc;">
+                                                    <div>
+                                                        <span class="d-block text-muted" style="font-size: 0.7rem; font-weight: 700; letter-spacing: 1px;">AVAILABILITY</span>
+                                                        @if($book->quantity > 0)
+                                                            <span class="fw-bold text-success">{{ $book->quantity }} in stock</span>
+                                                        @else
+                                                            <span class="fw-bold text-danger">Out of stock</span>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                        </div>
+                    @empty
+                        <div class="col-12">
+                            <div class="alert alert-light border-0 rounded-4 text-center py-5 shadow-sm">
+                                <p class="text-muted mb-0 fw-bold">No books found matching your search.</p>
+                            </div>
+                        </div>
+                    @endforelse
+                </div>
+
+                <!-- Pagination for Students -->
+                @if($books->hasPages())
+                    <div class="mt-4 d-flex justify-content-end">
+                        {{ $books->links() }}
+                    </div>
+                @endif
+            @endcan
+        </main>
+    </div>
+</div>
+@endsection
