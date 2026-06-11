@@ -9,18 +9,17 @@
     <body class="bg-light">
         @yield('content')
     
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
     </body>
     <style>
         :root {
-            --primary-blue: #3b82f6; /* Adjust to match your Figma blue */
+            --primary-blue: #3b82f6;
             --bg-light: #f8fafc;
             --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
 
         body {
             background-color: var(--bg-light);
-            /* This creates your Figma grid background effect */
             background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
             background-size: 20px 20px;
             font-family: 'Inter', sans-serif;
@@ -29,7 +28,7 @@
 
         .custom-card {
             border: none;
-            border-radius: 1.5rem; /* Matches your soft rounded Figma corners */
+            border-radius: 1.5rem;
             box-shadow: var(--card-shadow);
             transition: transform 0.2s;
         }

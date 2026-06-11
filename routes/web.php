@@ -12,6 +12,14 @@ Route::get('/', function () {
     return view('auth.register');
 });
 
+Route::get('lang/{locale}', function ($locale) {
+    $supportedLocales = array_keys(config('app.supported_locales', []));
+    if (in_array($locale, $supportedLocales)) {
+        session()->put('locale', $locale);
+    }
+    return redirect()->back();
+})->name('lang.switch');
+
 Route::get('/dashboard', [RentalController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {

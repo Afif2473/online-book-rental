@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use App\Http\Middleware\localization;
 
 //$app->register(\Barryvdh\DomPDF\ServiceProvider::class);
 return Application::configure(basePath: dirname(__DIR__))
@@ -13,11 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware){
-        /*$middleware->alias([
-            'client' => \Laravel\Passport\Http\Middleware\CheckToken::class,
-            'scopes' => \Laravel\Passport\Http\Middleware\CheckToken::class,
-            'scope' => \Laravel\Passport\Http\Middleware\CheckTokenForAnyScope::class
-        ]);*/
+        $middleware->web(append: [
+            localization::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
